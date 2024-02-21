@@ -7,5 +7,5 @@ Balga Teodora-Stefania - frontend developer
 
 Dinca Maria-Mirabela - team lead
 
-
+# Limbaj programare: python
 # Tehnologii alese: Flask + mongoDB

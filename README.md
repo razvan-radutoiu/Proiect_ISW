@@ -1,11 +1,13 @@
-# Proiect_ISW
-Proiect_ISW
+# Proiect ISW
 
-Radutoiu Razvan-Florin - backend developer
+- **Radutoiu Razvan-Florin** - Dezvoltator Backend
+- **Balga Teodora-Stefania** - Dezvoltator Frontend
+- **Dinca Maria-Mirabela** - Team Leader
 
-Balga Teodora-Stefania - frontend developer
+## Descriere
 
-Dinca Maria-Mirabela - team lead
+Acest proiect constituie o aplicatie web pentru cantina Universitatii Transilvania si este construit folosind limbajul de programare Python și următoarele tehnologii:
 
-# Limbaj programare: python
-# Tehnologii alese: Flask + mongoDB
+- **Framework:** Flask
+- **Bază de date:** MongoDB
+

@@ -1,6 +1,7 @@
 import pymongo
 from flask import request
 import bcrypt
+from bson import ObjectId
 
 client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 
@@ -74,6 +75,24 @@ def insert_menu_item():
         }
 
         menu_items.insert_one(menu_item)
+
+
+def add_menu_item(name, description, price, image_url):
+    menu_item_id = ObjectId()
+
+    menu_item = {
+        "_id": menu_item_id,
+        "name": name,
+        "description": description,
+        "price": price,
+        "image_url": image_url
+    }
+
+    menu_items.insert_one(menu_item)
+
+def remove_menu_item(item_id):
+    item_id = ObjectId(item_id)
+    menu_items.delete_one({"_id": item_id})
 
 
 def get_menu():

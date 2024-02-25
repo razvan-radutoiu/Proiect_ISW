@@ -7,11 +7,10 @@ client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 db = client['university_cafeteria']  # DB name
 users = db['users']
 menu_items = db['menu_items']
+admins = db['admins']
 
 def hash_pass(password):
-    """
-    Hashes a password using bcrypt.
-    """
+
     salt = bcrypt.gensalt()
     hashed_password = bcrypt.hashpw(password.encode('utf-8'), salt)
     return hashed_password

@@ -11,9 +11,6 @@ app.secret_key = '1234'
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
 
-    session.pop('logged_in', None)
-    session.pop('username', None)
-
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -48,6 +45,7 @@ def signin():
 
     if status:
         session['logged_in'] = True
+        session['admin_logged_in'] = False # !!!
         session['username'] = username
 
         if remember_me:
@@ -74,12 +72,28 @@ def register():
 @app.route('/menu', methods=['GET', 'POST'])
 def menu():
     menu_data = db.get_menu()
-    if not session.get('logged_in') and not session.get('admin_logged_in'):  # Redirect non-logged-in or non-admin users to home
+
+    print(session.get('admin_logged_in')) # note to self: don't forget to pop user session variable
+    if session.get('admin_logged_in'):
+        if request.method == 'POST':
+            action = request.form.get('action')
+
+            if action == 'add':
+                db.add_menu_item(request.form['name'], request.form['description'], request.form['price'],
+                                 request.form['image_url'])
+            elif action == 'remove':
+                db.remove_menu_item(request.form['item_id'])
+
+        menu_data = db.get_menu()
+
+        return render_template('menu.html', menu_data=menu_data, admin_logged_in = True)
+
+    # Redirect non-admin users or non-logged-in users to the home route
+    elif not session.get('logged_in'):
         return redirect(url_for('home'))
-    else:
-        return render_template('menu.html', menu_data=menu_data)
 
-
+    # Render the menu template for regular users
+    return render_template('menu.html', menu_data=menu_data, admin_logged_in = False)
 
 
 @app.errorhandler(404)

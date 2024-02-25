@@ -95,11 +95,11 @@
         <div class="welcome-user">
             {% if session.logged_in %}
             Welcome, {{ session.username }}
-                <form action="{{ url_for('logout') }}" method="post">
+            <form action="{{ url_for('logout') }}" method="post">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
             {% else %}
-            Welcome Guest
+            ADMIN MENU
             {% endif %}
         </div>
     </header>
@@ -111,9 +111,29 @@
             <h2>{{ item.name }}</h2>
             <p>{{ item.description }}</p>
             <p class="price">${{ item.price }}</p>
+            <!-- Add to Cart button for all users -->
             <button class="add-to-cart-button">Add to Cart</button>
+            <!-- Form for removing item (visible only to admin users) -->
+            {% if session.admin_logged_in %}
+            <form action="{{ url_for('menu') }}" method="post">
+                <input type="hidden" name="action" value="remove">
+                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <button type="submit">Remove</button>
+            </form>
+            {% endif %}
         </div>
         {% endfor %}
+        <!-- Form for adding new item (visible only to admin users) -->
+        {% if session.admin_logged_in %}
+        <form action="{{ url_for('menu') }}" method="post">
+            <input type="hidden" name="action" value="add">
+            <input type="text" name="name" placeholder="Item Name" required>
+            <input type="text" name="description" placeholder="Item Description" required>
+            <input type="number" name="price" placeholder="Price" step="0.01" min="0.01" required>
+            <input type="text" name="image_url" placeholder="Image URL" required>
+            <button type="submit">Add New Item</button>
+        </form>
+        {% endif %}
     </div>
 </body>
 

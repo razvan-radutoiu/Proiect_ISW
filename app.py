@@ -22,16 +22,16 @@ def admin_login():
                 session['admin_logged_in'] = True
                 return redirect(url_for('menu'))
 
-    return render_template('admin.html')
+    return render_template('admin.html'), 200
 
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
-        return render_template("signin.html")
+        return render_template("signin.html"), 200
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    return render_template("signup.html")
+    return render_template("signup.html"), 200
 
 @app.route('/signin', methods=['POST'])
 def signin():
@@ -54,8 +54,9 @@ def signin():
     else:
         session.pop('logged_in', None)
         session.pop('username', None)
+        data["error"] = "Invalid credentials"
 
-    return json.dumps(data)
+    return json.dumps(data), 200
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -67,7 +68,7 @@ def logout():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     status = db.insert_user()
-    return json.dumps(status)
+    return json.dumps(status), 200
 
 @app.route('/menu', methods=['GET', 'POST'])
 def menu():
@@ -90,11 +91,9 @@ def menu():
 
         return render_template('menu.html', menu_data=menu_data, admin_logged_in = True)
 
-    # Redirect non-admin users or non-logged-in users to the home route
     elif not session.get('logged_in'):
         return redirect(url_for('home'))
 
-    # Render the menu template for regular users
     return render_template('menu.html', menu_data=menu_data, admin_logged_in = False)
 
 

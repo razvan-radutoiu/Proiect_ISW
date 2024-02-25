@@ -117,7 +117,7 @@
             {% if session.admin_logged_in %}
             <form action="{{ url_for('menu') }}" method="post">
                 <input type="hidden" name="action" value="remove">
-                <input type="hidden" name="item_id" value="{{ item.id }}">
+                <input type="hidden" name="item_id" value="{{ item._id }}">
                 <button type="submit">Remove</button>
             </form>
             {% endif %}

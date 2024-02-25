@@ -82,7 +82,9 @@ def menu():
                 db.add_menu_item(request.form['name'], request.form['description'], request.form['price'],
                                  request.form['image_url'])
             elif action == 'remove':
-                db.remove_menu_item(request.form['item_id'])
+                item_id = request.form.get('item_id')
+                db.remove_menu_item(item_id)
+                return redirect(url_for('menu'))
 
         menu_data = db.get_menu()
 

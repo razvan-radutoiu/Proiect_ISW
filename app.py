@@ -2,13 +2,35 @@ from datetime import timedelta
 import db
 import json
 from flask import Flask, request, render_template, jsonify, redirect, url_for, session
+import bcrypt
 
 app = Flask(__name__)
 app.secret_key = '1234'
 
+# Admin login route
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_login():
+
+    session.pop('logged_in', None)
+    session.pop('username', None)
+
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        admin_data = db.admins.find_one({'name': username})
+
+        if admin_data:
+            if bcrypt.checkpw(password.encode('utf-8'), admin_data['password']):
+                session['admin_logged_in'] = True
+                return redirect(url_for('menu'))
+
+    return render_template('admin.html')
+
+
 @app.route('/', methods=['GET', 'POST'])
 def home():
-    return render_template("signin.html")
+        return render_template("signin.html")
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
@@ -52,10 +74,12 @@ def register():
 @app.route('/menu', methods=['GET', 'POST'])
 def menu():
     menu_data = db.get_menu()
-    if not session.get('logged_in'):
+    if not session.get('logged_in') and not session.get('admin_logged_in'):  # Redirect non-logged-in or non-admin users to home
         return redirect(url_for('home'))
     else:
         return render_template('menu.html', menu_data=menu_data)
+
+
 
 
 @app.errorhandler(404)

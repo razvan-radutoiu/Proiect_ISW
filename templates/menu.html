@@ -11,12 +11,13 @@
             margin: 0;
             padding: 0;
             background-color: #f2f2f2;
+            text-align: center;
         }
 
         header {
             background-color: #333;
             color: #fff;
-            padding: 20px;
+            padding: 10px;
             text-align: center;
             position: relative;
         }
@@ -25,10 +26,12 @@
             max-width: 800px;
             margin: 20px auto;
             padding: 0 20px;
+            text-align: center;
         }
 
         h2 {
             margin-top: 0;
+            text-align: center;
         }
 
         .menu-item {
@@ -36,6 +39,7 @@
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             padding: 20px;
+            text-align: center;
             margin-bottom: 20px;
         }
 
@@ -59,13 +63,20 @@
             color: #333;
         }
 
-        .welcome-user {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            color: #fff;
-            font-weight: bold;
-        }
+.welcome-user {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.welcome-container {
+    margin-bottom: 10px; /* Adjust as needed */
+}
+
+.logout-button {
+    width: 100px; /* Adjust width as needed */
+}
+
                 .logout-button {
             background-color: #333;
             color: #fff;
@@ -83,36 +94,172 @@
             background-color: #555;
         }
 
+        .cart-button {
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            position: absolute;
+            top: 20px;
+            right: 125px;
+            transition: background-color 0.3s ease;
+}
 
+        .cart-button:hover {
+            background-color: #555;
+        }
+
+.quantity-container {
+    align-items: center;
+    text-align: center;
+}
+
+.add-to-cart-button {
+    margin-right: 10px; /* Adjust margin as needed */
+}
+
+.increment-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.decrement-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.add-to-cart-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.quantity-display {
+    margin-left: 5px;
+    text-align: center;
+}
+
+.notification-badge {
+    background-color: red;
+    color: white;
+    border-radius: 50%;
+    padding: 5px 8px;
+    font-size: 12px;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+}
 
 
     </style>
 </head>
 
-<body>
+<!-- Import necessary CSS and JavaScript libraries -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+<!-- Modal for editing menu items -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel">Edit Menu Item</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" action="{{ url_for('menu') }}" method="post">
+            <input type="hidden" name="action" value="edit">
+          <input type="hidden" id="item_id" name="item_id">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" class="form-control" id="name" name="name">
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description"></textarea>
+          </div>
+          <div class="form-group">
+            <label for="price">Price</label>
+            <input type="text" class="form-control" id="price" name="price">
+          </div>
+          <div class="form-group">
+            <label for="image_url">Image URL</label>
+            <input type="text" class="form-control" id="image_url" name="image_url">
+          </div>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Your existing menu rendering code here -->
+
+
+<body style="text-align: center">
     <header>
         <h1>University Cafeteria</h1>
         <div class="welcome-user">
-            {% if session.logged_in %}
-            Welcome, {{ session.username }}
-            <form action="{{ url_for('logout') }}" method="post">
-                <button class="logout-button" type="submit">Logout</button>
-            </form>
-            {% else %}
-            ADMIN MENU
-            {% endif %}
-        </div>
+    {% if session.logged_in %}
+    <div class="welcome-container">
+        <span>Welcome, {{ session.username }}!</span>
+    </div>
+    <form action="{{ url_for('logout') }}" method="post">
+        <button class="logout-button" type="submit">Logout</button>
+    </form>
+    {% else %}
+    ADMIN MENU
+    {% endif %}
+        <form action="{{ url_for('view_cart') }}" method="get">
+<button class="cart-button" type="submit">
+    Cart {% if session.cart|length > 0 %}<span class="notification-badge">{{ session.cart|length }}</span>{% endif %}
+</button>
+        </form>
+
+</div>
+
     </header>
     <div class="container">
-        <h2>Menu</h2>
-        {% for item in menu_data %}
-        <div class="menu-item">
-            <img src="{{ url_for('static', filename=item.image_url) }}" alt="{{ item.name }}" style="width: 200px; height: 200px;">
-            <h2>{{ item.name }}</h2>
-            <p>{{ item.description }}</p>
-            <p class="price">{{ item.price }} LEI</p>
-            <!-- Add to Cart button for all users -->
-            <button class="add-to-cart-button">Add to Cart</button>
+    <h2>Menu</h2>
+    {% for item in menu_data %}
+    <div class="menu-item">
+        <img src="{{ url_for('static', filename=item.image_url) }}" alt="{{ item.name }}" style="width: 200px; height: 200px;">
+        <h2>{{ item.name }}</h2>
+        <p>{{ item.description }}</p>
+        <p class="price">{{ item.price }} LEI</p>
+        <form action="/add_to_cart" method="post">
+            <input type="hidden" name="item_id" value="{{ item._id }}">
+            <input type="hidden" name="quantity" class="quantity" value="1">
+            <div class="quantity-container">
+                <button type="submit" class="add-to-cart-button">Add to Cart</button>
+                <button type="button" class="decrement-button" onclick="decrementQuantity(this)">-</button>
+                <button type="button" class="increment-button" data-max="{{ item.max_quantity }}" onclick="incrementQuantity(this)">+</button>
+                <span class="quantity-display">1</span>
+            </div>
+        </form>
+    </div>
+</form>
+
+            {% if session.admin_logged_in %}
+            <button class="edit-btn" data-item-id="{{ item._id }}" data-name="{{ item.name }}" data-description="{{ item.description }}" data-price="{{ item.price }}" data-image-url="{{ item.image_url }}">Edit</button>
+            {% endif %}
+
             <!-- Form for removing item (visible only to admin users) -->
             {% if session.admin_logged_in %}
             <form action="{{ url_for('menu') }}" method="post">
@@ -136,5 +283,52 @@
         {% endif %}
     </div>
 </body>
+
+<script>
+  $(document).ready(function() {
+    // Show edit modal when edit button is clicked
+    $('.edit-btn').click(function() {
+      var item_id = $(this).data('item-id');
+      var name = $(this).data('name');
+      var description = $(this).data('description');
+      var price = $(this).data('price');
+      var image_url = $(this).data('image-url');
+
+      $('#item_id').val(item_id);
+      $('#name').val(name);
+      $('#description').val(description);
+      $('#price').val(price);
+      $('#image_url').val(image_url);
+
+      $('#editModal').modal('show');
+    });
+  });
+
+    function incrementQuantity(button) {
+    var form = button.closest('form');
+    var quantityInput = form.querySelector('.quantity');
+    var quantityDisplay = form.querySelector('.quantity-display');
+    quantityInput.value = parseInt(quantityInput.value) + 1;
+    quantityDisplay.textContent = quantityInput.value; // Update quantity display
+}
+
+  function decrementQuantity(button) {
+    var form = button.closest('form');
+    var quantityInput = form.querySelector('.quantity');
+    var quantityDisplay = form.querySelector('.quantity-display');
+    var currentValue = parseInt(quantityInput.value);
+
+    if (currentValue > 1) {
+        quantityInput.value = currentValue - 1;
+        quantityDisplay.textContent = quantityInput.value; // Update quantity display
+    }
+}
+
+
+
+
+
+</script>
+
 
 </html>

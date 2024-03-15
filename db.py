@@ -36,7 +36,7 @@ def insert_user():
 
         if users.find_one({"email": email}) is None:
             users.insert_one(reg_user)
-            return True
+            return True, "Success"
         else:
             return False, "User already in database"
 

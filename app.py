@@ -4,11 +4,20 @@ import json
 from flask import Flask, request, render_template, jsonify, redirect, url_for, session
 import bcrypt
 from bson import ObjectId
+from functools import wraps
 
 app = Flask(__name__)
 app.secret_key = '1234'
 
-# Admin login route
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'logged_in' not in session:
+            return redirect(url_for('home'))  # Redirect to the login page
+        return f(*args, **kwargs)
+    return decorated_function
+
+# ROUTES
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
 
@@ -64,6 +73,7 @@ def logout():
     session.pop('logged_in', None)
     session.pop('username', None)
     session.pop('cart', None)
+    session.pop('admin_logged_in', None)
 
     return redirect(url_for('home'))
 
@@ -109,7 +119,8 @@ def menu():
 
     return render_template('menu.html', menu_data=menu_data, admin_logged_in = False, num_items_in_cart=num_items_in_cart)
 
-@app.route('/add_to_cart', methods=['POST'])
+@app.route('/add_to_cart', methods=['POST', 'GET'])
+@login_required
 def add_to_cart():
     item_id = request.form.get('item_id')
     quantity = int(request.form.get('quantity', 1))
@@ -133,7 +144,8 @@ def add_to_cart():
     session.modified = True
     return redirect(url_for('menu'))
 
-@app.route('/remove_from_cart', methods=['POST'])
+@app.route('/remove_from_cart', methods=['POST', 'GET'])
+@login_required
 def remove_from_cart():
     item_id = request.form.get('item_id')
     print(f"ITEM ID:{item_id}")
@@ -148,6 +160,7 @@ def remove_from_cart():
     return redirect(url_for('view_cart'))
 
 @app.route('/cart', methods=['GET'])
+@login_required
 def view_cart():
     cart = session.get('cart', {})
     print(session)

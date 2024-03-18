@@ -1,8 +1,9 @@
 import pymongo
-from flask import request
+from flask import request, jsonify
 import bcrypt
 from bson import ObjectId
 from datetime import datetime
+
 
 client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 
@@ -31,12 +32,13 @@ def insert_user():
             'email': email,
             'password': hashed_password,
             'role': 'customer',  # user role
-            'date_created': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            'date_created': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'orders': []
         }
 
         if users.find_one({"email": email}) is None:
             users.insert_one(reg_user)
-            return True, "Success"
+            return True
         else:
             return False, "User already in database"
 
@@ -95,3 +97,15 @@ def edit_menu_item(item_id, name, description, price, image_url):
     }
 
     menu_items.update_one({"_id": item_id}, {"$set": updated_menu_item})
+
+def save_order(email, order_data):
+    user_data = users.find_one({'email': email})
+
+    if user_data:
+        user_id = user_data['_id']
+        users.update_one(
+            {'email': email},
+            {'$push': {'orders': order_data}}
+        )
+    else:
+        print(f"User with email {email} not found in the database.")

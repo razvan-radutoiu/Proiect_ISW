@@ -8,8 +8,8 @@ import bcrypt
 from bson import ObjectId
 from functools import wraps
 
-
 app = Flask(__name__)
+app.maintenance_mode = False  # New variable to track maintenance mode status
 app.secret_key = '1234'
 
 
@@ -23,9 +23,23 @@ def login_required(f):
     return decorated_function
 
 
+def check_maintenance_mode():
+    if 'admin_logged_in' in session:
+        return None
+    elif app.maintenance_mode:
+        return render_template('maintenance_mode.html')
+    else:
+        return None
+
+
 # ROUTES
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_login():
+    session.pop('logged_in', None)
+    session.pop('username', None)
+    session.pop('cart', None)
+    session.pop('admin_logged_in', None)
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -42,11 +56,20 @@ def admin_login():
 
 @app.route('/', methods=['GET', 'POST'])
 def home():
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response and 'admin_logged_in' not in session:
+        return maintenance_mode_response
+
+    if 'logged_in' and 'admin_logged_in' in session:
+        return redirect(url_for('menu'))
     return render_template("signin.html"), 200
 
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
+    if 'logged_in' and 'admin_logged_in' in session:
+        return redirect(url_for('menu'))
+
     return render_template("signup.html"), 200
 
 
@@ -94,6 +117,10 @@ def register():
 
 @app.route('/menu', methods=['GET', 'POST'])
 def menu():
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response and 'admin_logged_in' not in session:
+        return maintenance_mode_response
+
     menu_data = db.get_menu()
     num_items_in_cart = sum(session.get('cart', {}).values())
 
@@ -119,13 +146,15 @@ def menu():
                 price = request.form.get('price')
                 image_url = request.form.get('image_url')
                 db.edit_menu_item(item_id, name, description, price, image_url)
+            elif action == 'toggle_maintenance':
+                app.maintenance_mode = not app.maintenance_mode
 
             return redirect(url_for('menu'))
 
         menu_data = db.get_menu()
 
         return render_template('menu.html', menu_data=menu_data, admin_logged_in=True,
-                               num_items_in_cart=num_items_in_cart)
+                               num_items_in_cart=num_items_in_cart, maintenance_mode=app.maintenance_mode)
 
     elif not session.get('logged_in'):
         return redirect(url_for('home'))
@@ -136,6 +165,11 @@ def menu():
 @app.route('/add_to_cart', methods=['POST', 'GET'])
 @login_required
 def add_to_cart():
+
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response:
+        return maintenance_mode_response
+
     item_id = request.form.get('item_id')
     quantity = int(request.form.get('quantity', 1))
 
@@ -178,6 +212,10 @@ def remove_from_cart():
 @app.route('/cart', methods=['GET'])
 @login_required
 def view_cart():
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response:
+        return maintenance_mode_response
+
     cart = session.get('cart', {})
     print(session)
     total_price = 0
@@ -218,12 +256,17 @@ import qrcode
 from qrcode.image.styledpil import StyledPilImage
 from io import BytesIO
 
-
 daily_order_counts = {}
+
 
 @app.route('/cart/checkout', methods=['POST'])
 @login_required
 def checkout():
+
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response:
+        return maintenance_mode_response
+
     items_in_cart = session.get('cart', [])
     session['transaction_made'] = False
     total_price = total
@@ -243,6 +286,22 @@ def checkout():
     transaction_id = str(uuid.uuid4())
 
     order_number = f"{today.replace('-', '')}-{daily_order_counts[today]:04d}"
+
+    order_items = []
+    for item_id, quantity in items_in_cart.items():
+        order_items.append({
+            'item_id': item_id,
+            'quantity': quantity
+        })
+
+    order_data = {
+        'order_id': transaction_id,
+        'order_date': datetime.now().isoformat(),
+        'total_price': total_price,
+        'items': order_items
+    }
+
+    # db.save_order(session['username'], order_data)
 
     qr_data = {
         'transaction_id': transaction_id,
@@ -272,12 +331,86 @@ def checkout():
     qr_img.save(qr_image_io, format='PNG', compress_level=0)
     qr_image_base64 = base64.b64encode(qr_image_io.getvalue()).decode()
 
+    order_data['qr_image_base64'] = qr_image_base64
+    db.save_order(session['username'], order_data)
+
     session.pop('cart')
     session['transaction_made'] = True
 
+    return render_template('checkout.html', transaction_id=transaction_id, qr_image_base64=qr_image_base64,
+                           order_number=order_number)
 
-    return render_template('checkout.html', transaction_id=transaction_id, qr_image_base64=qr_image_base64, order_number=order_number)
 
+@app.route('/orders', methods=['GET'])
+@login_required
+def view_orders():
+
+    maintenance_mode_response = check_maintenance_mode()
+    if maintenance_mode_response:
+        return maintenance_mode_response
+
+    username = session.get('username')
+    user_data = db.users.find_one({'name': username})
+
+    if not user_data:
+        return "User not found", 404
+
+    orders = user_data.get('orders', [])
+
+    formatted_orders = []
+    for order in orders:
+        order_date = datetime.fromisoformat(order['order_date'])
+        order_items = []
+        items = order.get('items', [])
+        for item in items:
+            menu_item = db.menu_items.find_one({'_id': ObjectId(item['item_id'])})
+            if menu_item:
+                order_items.append({
+                    'name': menu_item['name'],
+                    'quantity': item['quantity']
+                })
+
+        qr_image_base64 = order.get('qr_image_base64', '')
+
+        formatted_order = {
+            'id': order['order_id'],
+            'order_date': order_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'total_price': order['total_price'],
+            'items': order_items,
+            'qr_image_base64': qr_image_base64  # Include QR code image data
+        }
+
+        formatted_orders.append(formatted_order)
+
+    return render_template('orders.html', orders=formatted_orders)
+
+
+@app.route('/process_scanned_qr', methods=['POST'])
+def process_scanned_qr():
+    data = request.json
+    scanned_data = data.get('qr_data')
+
+    # Process the scanned QR code data and modify the HTML content accordingly
+    # For demonstration purposes, let's assume we update the orders list
+    orders = [
+        {
+            'id': 1,
+            'order_date': '2022-03-17 12:34:56',
+            'total_price': 50,
+            'items': [{'name': 'Item 1', 'quantity': 2}],
+            'qr_image_base64': 'updated_qr_code_base64_data'
+        },
+        {
+            'id': 2,
+            'order_date': '2022-03-16 09:00:00',
+            'total_price': 30,
+            'items': [{'name': 'Item 2', 'quantity': 1}],
+            'qr_image_base64': 'updated_qr_code_base64_data'
+        }
+    ]
+
+    # Render the orders.html template with the updated orders list
+    return render_template('orders.html', orders=orders)
 
 
 @app.errorhandler(404)
@@ -286,4 +419,4 @@ def page_not_found(e):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port='5000', debug=True)

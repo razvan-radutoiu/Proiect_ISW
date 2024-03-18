@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>My Orders</title>
+   <style>
+       body {
+           font-family: Arial, sans-serif;
+           margin: 0;
+           padding: 0;
+           background-color: #f6f4eb; /* Bej deschis */
+           color: #5c4e2e; /* Maro deschis */
+       }
+
+       .container {
+           max-width: 800px;
+           margin: 20px auto;
+           padding: 0 20px;
+       }
+
+       h2 {
+           margin-top: 0;
+           font-size: 36px;
+           font-weight: bold;
+           color: #333;
+       }
+
+.order-item {
+    position: relative;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    margin-bottom: 20px;
+    /* Ensure there's enough space for the QR code */
+    padding-right: 220px; /* 200px width + 20px padding */
+}
+
+.qr-code {
+    position: absolute;
+    top: 20px; /* Adjust as needed */
+    right: 20px; /* Adjust as needed */
+    width: 200px;
+    height: auto; /* Maintain aspect ratio */
+}
+
+
+       .order-item h3 {
+           margin-top: 0;
+           color: #333;
+           font-size: 24px;
+       }
+
+       .order-item p {
+           margin: 10px 0;
+           color: #666;
+           font-size: 18px;
+       }
+
+       .order-item p.price {
+           font-weight: bold;
+           color: #333;
+       }
+
+       .return-to-menu-button {
+           display: inline-block;
+           background-color: #5c4e2e; /* Maro */
+           color: #fff;
+           border: none;
+           padding: 15px 30px;
+           border-radius: 5px;
+           text-decoration: none;
+           margin-top: 20px;
+           transition: background-color 0.3s ease;
+           font-size: 20px;
+           font-weight: bold;
+       }
+
+       .return-to-menu-button:hover {
+           background-color: #8d6e3e; /* Maro deschis */
+       }
+
+       /* CSS for the modal */
+.modal {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgba(0, 0, 0, 0.8); /* Black w/ opacity */
+}
+
+.modal-content {
+  margin: auto;
+  display: block;
+  width: 80%;
+  max-width: 800px;
+}
+
+#modal-image {
+  width: 100%;
+  height: auto;
+}
+
+.close {
+  color: #fff;
+  position: absolute;
+  top: 15px;
+  right: 35px;
+  font-size: 40px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+   </style>
+</head>
+
+<body>
+<div id="myModal" class="modal">
+  <!-- Modal content -->
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <img id="modal-image" src="" alt="Zoomed QR Code">
+  </div>
+</div>
+
+   <div class="container">
+       <!-- Orders display -->
+       <h2>My Orders</h2>
+       {% if orders %}
+       {% for order in orders %}
+       <div class="order-item">
+                  <img src="data:image/png;base64,{{ order.qr_image_base64 }}" alt="QR Code" class="qr-code" style="cursor: pointer">
+
+           <!-- Display order details -->
+           <h3>Order #{{ order.id }}</h3>
+           <p>Order Date: {{ order.order_date }}</p>
+           <p class="price">Total: {{ order.total_price }} LEI</p>
+           <h4>Items:</h4>
+           <ul>
+               {% for item in order['items'] %}
+               <li>{{ item['name'] }} - Quantity: {{ item['quantity'] }}</li>
+               {% endfor %}
+           </ul>
+       </div>
+       {% endfor %}
+       <a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
+       {% else %}
+       <p>You have no orders yet.</p>
+       <a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
+       {% endif %}
+   </div>
+
+
+</body>
+<script>
+    // Get the modal
+var modal = document.getElementById("myModal");
+
+// Get the image and insert it inside the modal
+var img = document.getElementsByClassName("qr-code");
+var modalImg = document.getElementById("modal-image");
+
+// Loop through all images and add click event listeners
+for (var i = 0; i < img.length; i++) {
+  img[i].onclick = function(){
+    modal.style.display = "block";
+    modalImg.src = this.src;
+  }
+}
+
+// Get the <span> element that closes the modal
+var span = document.getElementsByClassName("close")[0];
+
+// When the user clicks on <span> (x), close the modal
+span.onclick = function() {
+  modal.style.display = "none";
+}
+
+// When the user clicks anywhere outside of the modal, close it
+window.onclick = function(event) {
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+</script>
+
+</html>

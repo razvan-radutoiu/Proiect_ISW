@@ -173,7 +173,6 @@ def add_to_cart():
     item_id = request.form.get('item_id')
     quantity = int(request.form.get('quantity', 1))
 
-    # print(item_id)
 
     # Validate item_id
     if not item_id:
@@ -198,13 +197,11 @@ def add_to_cart():
 def remove_from_cart():
     item_id = request.form.get('item_id')
     print(f"ITEM ID:{item_id}")
-    # print(session['cart'])
 
     if 'cart' in session and item_id in session['cart']:
         del session['cart'][item_id]
         session.modified = True  # !!! Make sure session is saved !!!
     print("UPDATED SESSION CART:")
-    # print(session['cart'])
 
     return redirect(url_for('view_cart'))
 
@@ -317,15 +314,6 @@ def checkout():
 
     qr_img = qr.make_image(image_factory=StyledPilImage, embeded_image_path="static/images/logo.png")
 
-    '''
-    qr_img = qr.make_image(fill_color="black", back_color="white")
-
-    qr_logo.thumbnail((qr_img.size[0] // 4, qr_img.size[1] // 4), Image.NEAREST)
-
-    pos = ((qr_img.size[0] - qr_logo.size[0]) // 2, (qr_img.size[1] - qr_logo.size[1]) // 2)
-
-    qr_img.paste(qr_logo, pos, mask=qr_logo)
-    '''
 
     qr_image_io = BytesIO()
     qr_img.save(qr_image_io, format='PNG', compress_level=0)
@@ -384,33 +372,6 @@ def view_orders():
 
     return render_template('orders.html', orders=formatted_orders)
 
-
-@app.route('/process_scanned_qr', methods=['POST'])
-def process_scanned_qr():
-    data = request.json
-    scanned_data = data.get('qr_data')
-
-    # Process the scanned QR code data and modify the HTML content accordingly
-    # For demonstration purposes, let's assume we update the orders list
-    orders = [
-        {
-            'id': 1,
-            'order_date': '2022-03-17 12:34:56',
-            'total_price': 50,
-            'items': [{'name': 'Item 1', 'quantity': 2}],
-            'qr_image_base64': 'updated_qr_code_base64_data'
-        },
-        {
-            'id': 2,
-            'order_date': '2022-03-16 09:00:00',
-            'total_price': 30,
-            'items': [{'name': 'Item 2', 'quantity': 1}],
-            'qr_image_base64': 'updated_qr_code_base64_data'
-        }
-    ]
-
-    # Render the orders.html template with the updated orders list
-    return render_template('orders.html', orders=orders)
 
 
 @app.errorhandler(404)

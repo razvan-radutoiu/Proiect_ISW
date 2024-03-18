@@ -6,13 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Cart</title>
     <style>
-        /* Your CSS styles for the shopping cart page */
-
         body {
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f2f2f2;
+            background-color: #f6f4eb; /* Bej deschis */
+            color: #5c4e2e; /* Maro deschis */
         }
 
         .container {
@@ -23,6 +22,9 @@
 
         h2 {
             margin-top: 0;
+            font-size: 36px;
+            font-weight: bold;
+            color: #333;
         }
 
         .cart-item {
@@ -41,11 +43,13 @@
         .cart-item h3 {
             margin-top: 0;
             color: #333;
+            font-size: 24px;
         }
 
         .cart-item p {
             margin: 10px 0;
             color: #666;
+            font-size: 18px;
         }
 
         .cart-item p.price {
@@ -54,59 +58,109 @@
         }
 
         .cart-total {
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
             margin-top: 20px;
         }
 
         .checkout-button {
-            background-color: #333;
+
+            background-color: #8d6e3e; /* Maro deschis */
             color: #fff;
             border: none;
-            padding: 10px 20px;
+            padding: 15px 30px;
             border-radius: 5px;
             cursor: pointer;
             margin-top: 20px;
             transition: background-color 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+            text-decoration: none;
         }
 
         .checkout-button:hover {
-            background-color: #555;
+            background-color: #5c4e2e; /* Maro */
+        }
+
+        .return-to-menu-button {
+            display: inline-block;
+            background-color: #5c4e2e; /* Maro */
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+            margin-left: 20px;
+        }
+
+        .return-to-menu-button:hover {
+            background-color: #8d6e3e; /* Maro deschis */
+        }
+
+                .remove-button {
+            background-color: #8d6e3e; /* Maro deschis */
+            color: #fff;
+            border: none;
+            padding: 5px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .remove-button:hover {
+            background-color: #5c4e2e; /* Maro */
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- Cart items display -->
         <h2>Shopping Cart</h2>
         {% if items_in_cart %}
         {% for item in items_in_cart %}
         <div class="cart-item">
-            <!-- Display item details -->
             <h3>{{ item.name }}</h3>
             <p>Description: {{ item.description }}</p>
-            <img src=static/{{ item.image_url }} alt="Item Image">
+            <img src=static/{{ item.image_url }} alt="Item-Image">
             <p class="price"> {{ item.price }} LEI</p>
             <p>Quantity: {{ item.quantity }}</p>
-            <!-- Button to remove item from cart -->
             <p>Item ID: {{ item.item_id }}</p>
             <form action="{{ url_for('remove_from_cart') }}" method="post">
                 <input type="hidden" name="item_id" value="{{ item.item_id }}">
-                <button type="submit">Remove from Cart</button>
+                <button class="remove-button" type="submit">Remove from Cart</button>
             </form>
         </div>
         {% endfor %}
         <div class="cart-total">
             Total:  {{ total_price }} LEI
         </div>
-        <button class="checkout-button">Checkout</button>
+        <a href="#" class="checkout-button" onclick="checkout()">Checkout</a>
         <a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
         {% else %}
         <p>Your cart is empty.</p>
         <a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
         {% endif %}
     </div>
+
 </body>
+
+<script>
+    function checkout() {
+        var form = document.createElement('form');
+        form.method = 'post';
+        form.action = '{{ url_for('checkout') }}';
+
+        document.body.appendChild(form);
+
+        form.submit();
+    }
+</script>
 
 </html>

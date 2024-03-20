@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f4eb; /* Bej deschis */
+            color: #5c4e2e; /* Maro deschis */
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+        h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        p {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        img {
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #5c4e2e; /* Maro deschis */
+            border-radius: 5px;
+            padding: 5px;
+            background-color: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .return-to-menu-button {
+            display: inline-block;
+            background-color: #5c4e2e; /* Maro */
+            color: #fff;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 5px;
+            text-decoration: none;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+            font-size: 20px;
+            font-weight: bold;
+            margin-left: 20px;
+        }
+
+        .return-to-menu-button:hover {
+            background-color: #8d6e3e; /* Maro deschis */
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Checkout</h1>
+    <p>Prezinta codul QR de mai jos la cantina pentru ridicarea comenzii:</p>
+    <img src="data:image/png;base64,{{ qr_image_base64 }}" alt="QR Code">
+    <p>Transaction ID: {{ transaction_id }}</p>
+    <p>Order #: {{ order_number }}</p>
+<a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
+</body>
+
+</html>

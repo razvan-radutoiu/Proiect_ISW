@@ -3,7 +3,7 @@ from datetime import timedelta, datetime
 
 import db
 import json
-from flask import Flask, request, render_template, jsonify, redirect, url_for, session
+from flask import Flask, request, render_template, jsonify, redirect, url_for, session, Response
 import bcrypt
 from bson import ObjectId
 from functools import wraps
@@ -165,14 +165,12 @@ def menu():
 @app.route('/add_to_cart', methods=['POST', 'GET'])
 @login_required
 def add_to_cart():
-
     maintenance_mode_response = check_maintenance_mode()
     if maintenance_mode_response:
         return maintenance_mode_response
 
     item_id = request.form.get('item_id')
     quantity = int(request.form.get('quantity', 1))
-
 
     # Validate item_id
     if not item_id:
@@ -186,7 +184,7 @@ def add_to_cart():
     if item_id in session['cart']:
         session['cart'][item_id] += quantity
     else:
-        session['cart'][item_id] = quantity
+        session['cart'][item_id] = quantity # <-- sends back a cookie/session update
         print(session)
     session.modified = True
     return redirect(url_for('menu'))
@@ -259,7 +257,6 @@ daily_order_counts = {}
 @app.route('/cart/checkout', methods=['POST'])
 @login_required
 def checkout():
-
     maintenance_mode_response = check_maintenance_mode()
     if maintenance_mode_response:
         return maintenance_mode_response
@@ -314,7 +311,6 @@ def checkout():
 
     qr_img = qr.make_image(image_factory=StyledPilImage, embeded_image_path="static/images/logo.png")
 
-
     qr_image_io = BytesIO()
     qr_img.save(qr_image_io, format='PNG', compress_level=0)
     qr_image_base64 = base64.b64encode(qr_image_io.getvalue()).decode()
@@ -332,7 +328,6 @@ def checkout():
 @app.route('/orders', methods=['GET'])
 @login_required
 def view_orders():
-
     maintenance_mode_response = check_maintenance_mode()
     if maintenance_mode_response:
         return maintenance_mode_response
@@ -365,13 +360,31 @@ def view_orders():
             'order_date': order_date.strftime('%Y-%m-%d %H:%M:%S'),
             'total_price': order['total_price'],
             'items': order_items,
-            'qr_image_base64': qr_image_base64  # Include QR code image data
+            'qr_image_base64': qr_image_base64
         }
 
         formatted_orders.append(formatted_order)
 
     return render_template('orders.html', orders=formatted_orders)
 
+from flask import make_response
+
+@app.route('/orders/<order_id>/delete', methods=['POST'])
+@login_required
+def delete_order(order_id):
+    username = session.get('username')
+    order = db.users.find_one({'orders.order_id': order_id, 'name': username})
+    if not order:
+        return "Order not found or user is not authorized to delete it.", 404
+
+    db.users.update_one(
+        {'name': username},
+        {'$pull': {'orders': {'order_id': order_id}}}
+    )
+    response_text = "Order deleted successfully."
+    response = make_response(response_text, 302)
+    response.headers['Location'] = url_for('view_orders')
+    return response
 
 
 @app.errorhandler(404)

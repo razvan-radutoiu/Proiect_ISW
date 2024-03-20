@@ -4,7 +4,6 @@ import bcrypt
 from bson import ObjectId
 from datetime import datetime
 
-
 client = pymongo.MongoClient('mongodb://127.0.0.1:27017/')
 
 db = client['university_cafeteria']  # DB name
@@ -76,10 +75,10 @@ def add_menu_item(name, description, price, image_url):
     menu_items.insert_one(menu_item)
 
 
+
 def remove_menu_item(item_id):
     item_id = ObjectId(item_id)
     menu_items.delete_one({"_id": item_id})
-
 
 
 def get_menu():
@@ -98,14 +97,15 @@ def edit_menu_item(item_id, name, description, price, image_url):
 
     menu_items.update_one({"_id": item_id}, {"$set": updated_menu_item})
 
-def save_order(email, order_data):
-    user_data = users.find_one({'email': email})
+
+def save_order(username, order_data):
+    user_data = users.find_one({'name': username})
 
     if user_data:
         user_id = user_data['_id']
         users.update_one(
-            {'email': email},
+            {'name': username},
             {'$push': {'orders': order_data}}
         )
     else:
-        print(f"User with email {email} not found in the database.")
+        print(f"User with username {username} not found in the database.")

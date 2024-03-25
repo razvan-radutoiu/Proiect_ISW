@@ -149,6 +149,32 @@
             top: -8px;
             right: -8px;
         }
+
+                /* New styles for table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #333;
+            color: #fff;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+
+        tr:hover {
+            background-color: #e6e6e6;
+        }
     </style>
 </head>
 
@@ -212,6 +238,18 @@
             <form action="{{ url_for('logout') }}" method="post">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
+                <form action="{{ url_for('view_cart') }}" method="get">
+                <button class="cart-button" type="submit">
+                    Cart {% if session.cart|length > 0 %}<span class="notification-badge">{{ session.cart|length }}</span>{% endif %}
+                </button>
+            </form>
+            {% elif session.staff_logged_in %}
+            <div class="welcome-container">
+                <span>Welcome, {{ session.username }}!</span>
+            </div>
+                <form action="{{ url_for('logout') }}" method="post">
+                <button class="logout-button" type="submit">Logout</button>
+            </form>
             {% else %}
             ADMIN MENU
             <form action="{{ url_for('menu') }}" method="post">
@@ -228,11 +266,7 @@
                 <button class="logout-button" type="submit">Logout</button>
             </form>
             {% endif %}
-            <form action="{{ url_for('view_cart') }}" method="get">
-                <button class="cart-button" type="submit">
-                    Cart {% if session.cart|length > 0 %}<span class="notification-badge">{{ session.cart|length }}</span>{% endif %}
-                </button>
-            </form>
+
         </div>
     </header>
     <h2 style="font-size: 3rem;">Menu</h2>
@@ -246,6 +280,7 @@
             <form action="/add_to_cart" method="post">
                 <input type="hidden" name="item_id" value="{{ item._id }}">
                 <input type="hidden" name="quantity" class="quantity" value="1">
+                <!--<input type="hidden" name="name" class="name" value="{{ item.name }}">-->
                 <div class="quantity-container">
                     <button type="submit" class="add-to-cart-button">Add to Cart</button>
                     <button type="button" class="decrement-button" onclick="decrementQuantity(this)">-</button>
@@ -255,11 +290,11 @@
                 </div>
             </form>
         </div>
-        {% if session.admin_logged_in %}
+        {% if session.admin_logged_in or session.staff_logged_in %}
         <button class="edit-btn" data-item-id="{{ item._id }}" data-name="{{ item.name }}" data-description="{{ item.description }}" data-price="{{ item.price }}" data-image-url="{{ item.image_url }}">Edit</button>
         {% endif %}
         <!-- Form for removing item (visible only to admin users) -->
-        {% if session.admin_logged_in %}
+        {% if session.admin_logged_in or session.staff_logged_in %}
         <form action="{{ url_for('menu') }}" method="post">
             <input type="hidden" name="action" value="remove">
             <input type="hidden" name="item_id" value="{{ item._id }}">
@@ -269,7 +304,7 @@
     </div>
     {% endfor %}
     <!-- Form for adding new item (visible only to admin users) -->
-    {% if session.admin_logged_in %}
+    {% if session.admin_logged_in or session.staff_logged_in %}
         <h2>ADD ITEM TO MENU</h2>
         <div style="text-align: center;">
     <form action="{{ url_for('menu') }}" method="post" style="padding: 30px">
@@ -282,7 +317,56 @@
     </form>
         </div>
     {% endif %}
-    </div>
+<!-- Staff View Orders -->
+{% if session.staff_logged_in %}
+<h2>Orders</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Order Date</th>
+            <th>Total Price</th>
+            <th>Items</th>
+            <th>QR Code</th>
+            <th>Customer Name</th>
+            <th>Customer Email</th>
+        </tr>
+    </thead>
+    <tbody>
+{% for user in users %}
+    {% for order in user.orders %}
+        <tr>
+            <td>{{ order.order_id }}</td>
+            <td>{{ order.order_date }}</td>
+            <td>{{ order.total_price }}</td>
+            <td>
+                <ul>
+{% for item in order['items'] %}
+    {% set item_id = item.item_id %}
+    {% set menu_item = menu_items | selectattr("_id", "eq", item.item_id) | first %}
+    {#  <li>Item ID: {{ item_id }}, Menu Item: {{ menu_item }}</li>  #}
+    {% if menu_item %}
+        <li>{{ menu_item.name }} x {{ item.quantity }}</li>
+    {% else %}
+        <li>Unknown Item x {{ item.quantity }}</li>
+    {% endif %}
+{% endfor %}
+                </ul>
+            </td>
+            <td><img src="data:image/png;base64,{{ order.qr_image_base64 }}" alt="QR Code"></td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+        </tr>
+    {% endfor %}
+{% endfor %}
+
+
+
+
+
+    </tbody>
+</table>
+{% endif %}
 </body>
 
 <script>

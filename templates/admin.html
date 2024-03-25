@@ -13,11 +13,13 @@
             margin: 0;
             padding: 0;
         }
+
         h1 {
             font-size: 48px;
             margin-bottom: 20px;
             text-align: center;
         }
+
         form {
             max-width: 400px;
             margin: 0 auto;
@@ -26,9 +28,11 @@
             border-radius: 5px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
+
         label {
             font-size: 18px;
         }
+
         input[type="text"],
         input[type="password"] {
             width: 100%;
@@ -40,6 +44,7 @@
             color: #5c4e2e; /* Maro deschis */
             box-sizing: border-box;
         }
+
         button[type="submit"] {
             background-color: #8d6e3e; /* Maro deschis */
             color: #fff;
@@ -50,6 +55,7 @@
             font-size: 16px;
             transition: background-color 0.3s ease;
         }
+
         button[type="submit"]:hover {
             background-color: #5c4e2e; /* Maro */
         }
@@ -57,14 +63,14 @@
 </head>
 
 <body>
-    <h1>Admin Login</h1>
-    <form action="{{ url_for('admin_login') }}" method="POST">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required><br><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required><br><br>
-        <button type="submit">Login</button>
-    </form>
+<h1>Admin Login</h1>
+<form action="{{ url_for('admin_login') }}" method="POST">
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required><br><br>
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required><br><br>
+    <button type="submit">Login</button>
+</form>
 </body>
 
 </html>

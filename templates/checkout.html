@@ -14,14 +14,17 @@
             padding: 0;
             text-align: center;
         }
+
         h1 {
             font-size: 48px;
             margin-bottom: 20px;
         }
+
         p {
             font-size: 18px;
             margin-bottom: 20px;
         }
+
         img {
             display: block;
             margin: 0 auto;
@@ -54,11 +57,11 @@
 </head>
 
 <body>
-    <h1>Checkout</h1>
-    <p>Prezinta codul QR de mai jos la cantina pentru ridicarea comenzii:</p>
-    <img src="data:image/png;base64,{{ qr_image_base64 }}" alt="QR Code">
-    <p>Transaction ID: {{ transaction_id }}</p>
-    <p>Order #: {{ order_number }}</p>
+<h1>Checkout</h1>
+<p>Prezinta codul QR de mai jos la cantina pentru ridicarea comenzii:</p>
+<img src="data:image/png;base64,{{ qr_image_base64 }}" alt="QR Code">
+<p>Transaction ID: {{ transaction_id }}</p>
+<p>Order #: {{ order_number }}</p>
 <a href="{{ url_for('menu') }}" class="return-to-menu-button">Return to Menu</a>
 </body>
 

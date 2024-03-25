@@ -39,16 +39,25 @@ def admin_login():
     session.pop('username', None)
     session.pop('cart', None)
     session.pop('admin_logged_in', None)
+    session.pop('staff_logged_in', None)
+
 
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
         admin_data = db.admins.find_one({'name': username})
+        staff_name = admin_data['name']
+        print(admin_data)
 
-        if admin_data:
-            if bcrypt.checkpw(password.encode('utf-8'), admin_data['password']):
+        if admin_data and 'role' in admin_data:
+            role = admin_data['role']
+            if role == 'admin' and bcrypt.checkpw(password.encode('utf-8'), admin_data['password']):
                 session['admin_logged_in'] = True
+                return redirect(url_for('menu'))
+            elif role == 'staff' and bcrypt.checkpw(password.encode('utf-8'), admin_data['password']):
+                session['staff_logged_in'] = True
+                session['username'] = staff_name
                 return redirect(url_for('menu'))
 
     return render_template('admin.html'), 200
@@ -105,6 +114,7 @@ def logout():
     session.pop('username', None)
     session.pop('cart', None)
     session.pop('admin_logged_in', None)
+    session.pop('staff_logged_in', None)
 
     return redirect(url_for('home'))
 
@@ -124,11 +134,20 @@ def menu():
     menu_data = db.get_menu()
     num_items_in_cart = sum(session.get('cart', {}).values())
 
-    print(session.get('admin_logged_in'))  # note to self: don't forget to pop user session variable
+    print(session)
 
-    print((session))
+    if session.get('admin_logged_in') or session.get('staff_logged_in'):
+        '''In Flask-PyMongo, find() returns a cursor, not the actual documents.'''
+        users_cursor = db.users.find({'role': 'customer'})
+        users = list(users_cursor)
 
-    if session.get('admin_logged_in'):
+        menu_items_cursor = db.menu_items.find()
+        menu_items = list(menu_items_cursor)
+
+        print(menu_items)
+
+
+
         if request.method == 'POST':
             action = request.form.get('action')
 
@@ -153,13 +172,22 @@ def menu():
 
         menu_data = db.get_menu()
 
-        return render_template('menu.html', menu_data=menu_data, admin_logged_in=True,
-                               num_items_in_cart=num_items_in_cart, maintenance_mode=app.maintenance_mode)
+        # Convert item IDs in orders to ObjectId
+        for user in users:
+            for order in user['orders']:
+                for item in order['items']:
+                    item['item_id'] = ObjectId(item['item_id'])
+
+        return render_template('menu.html', menu_data=menu_data, admin_logged_in=session.get('admin_logged_in', False),
+                               staff_logged_in=session.get('staff_logged_in', False),
+                               num_items_in_cart=num_items_in_cart, maintenance_mode=app.maintenance_mode, users=users, menu_items=menu_items)
 
     elif not session.get('logged_in'):
         return redirect(url_for('home'))
 
-    return render_template('menu.html', menu_data=menu_data, admin_logged_in=False, num_items_in_cart=num_items_in_cart)
+    return render_template('menu.html', menu_data=menu_data, admin_logged_in=False, staff_logged_in=False,
+                           num_items_in_cart=num_items_in_cart)
+
 
 
 @app.route('/add_to_cart', methods=['POST', 'GET'])

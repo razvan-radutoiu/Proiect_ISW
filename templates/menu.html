@@ -183,6 +183,9 @@
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
 
+<!-- QR -->
+<script type="text/javascript" src="https://rawgit.com/schmich/instascan-builds/master/instascan.min.js"></script>
+
 <!-- Modal for editing menu items -->
 <div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -250,6 +253,10 @@
                 <form action="{{ url_for('logout') }}" method="post">
                 <button class="logout-button" type="submit">Logout</button>
             </form>
+
+                <button class="cart-button" id="qrScannerBtn">Scan QR Code</button>
+
+
             {% else %}
             ADMIN MENU
             <form action="{{ url_for('menu') }}" method="post">
@@ -327,7 +334,6 @@
             <th>Order Date</th>
             <th>Total Price</th>
             <th>Items</th>
-            <th>QR Code</th>
             <th>Customer Name</th>
             <th>Customer Email</th>
         </tr>
@@ -353,7 +359,6 @@
 {% endfor %}
                 </ul>
             </td>
-            <td><img src="data:image/png;base64,{{ order.qr_image_base64 }}" alt="QR Code"></td>
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
         </tr>
@@ -366,6 +371,7 @@
 
     </tbody>
 </table>
+    <video id="preview"></video>
 {% endif %}
 </body>
 
@@ -409,6 +415,77 @@
             quantityDisplay.textContent = quantityInput.value; // Update quantity display
         }
     }
+
+
+    let scanner = null;
+    const qrScannerBtn = document.getElementById('qrScannerBtn');
+
+    qrScannerBtn.addEventListener('click', () => {
+      startScanner();
+    });
+
+    function startScanner() {
+      scanner = new Instascan.Scanner({ video: document.getElementById('preview') });
+
+scanner.addListener('scan', function (scanContent) {
+  try {
+    const content = eval('(' + scanContent + ')');
+    const transactionId = content.transaction_id;
+    const customer = content.customer;
+
+    document.cookie = `customer=${encodeURIComponent(customer)}; path=/`;
+
+
+    // Call the function to delete the order
+    deleteOrder(transactionId);
+  } catch (error) {
+    console.error('Error parsing scanned data:',
+
+        error);
+  }
+});
+
+      Instascan.Camera.getCameras().then(function (cameras) {
+        if (cameras.length > 0) {
+          scanner.start(cameras[0]);
+        } else {
+          console.error('No cameras found.');
+        }
+      }).catch(function (e) {
+        console.error(e);
+      });
+    }
+
+    function deleteOrder(transactionId) {
+      fetch(`/orders/${transactionId}/delete`, {
+        method: 'POST',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest'// Required for Flask to recognize this as an AJAX request
+        },
+        credentials: 'same-origin' // Required to send cookies with the request
+      })
+      .then(response => {
+        if (response.ok) {
+          console.log('Order deleted successfully');
+          deleteCookie('customer');
+          location.reload();
+        } else {
+          console.error('Failed to delete order');
+          deleteCookie('customer');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    function deleteCookie(name) {
+    document.cookie = name + '=; Max-Age=-1; path=/';
+}
+
+
+
+
 </script>
 
 </html>

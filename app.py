@@ -290,6 +290,8 @@ def checkout():
         return maintenance_mode_response
 
     items_in_cart = session.get('cart', [])
+    customer = session.get('username')
+    print(customer)
     session['transaction_made'] = False
     total_price = total
 
@@ -326,6 +328,7 @@ def checkout():
     # db.save_order(session['username'], order_data)
 
     qr_data = {
+        'customer': customer,
         'transaction_id': transaction_id,
         'items_in_cart': items_in_cart,
         'total_price': total_price
@@ -398,12 +401,24 @@ def view_orders():
 from flask import make_response
 
 @app.route('/orders/<order_id>/delete', methods=['POST'])
-@login_required
+#@login_required
 def delete_order(order_id):
     username = session.get('username')
     order = db.users.find_one({'orders.order_id': order_id, 'name': username})
+
+    customer = request.cookies.get('customer')
+    print(customer)
+    if customer:
+        order = db.users.find_one({'orders.order_id': order_id, 'name': customer})
+        db.users.update_one(
+            {'name': customer},
+            {'$pull': {'orders': {'order_id': order_id}}}
+        )
+
+
+
     if not order:
-        return "Order not found or user is not authorized to delete it.", 404
+        return "Order not found or user is not authorized to delete it.", 400
 
     db.users.update_one(
         {'name': username},
